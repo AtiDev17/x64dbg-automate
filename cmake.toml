@@ -23,8 +23,8 @@ required = true
 required = true
 
 [fetch-content.x64dbg]
-url = "https://sourceforge.net/projects/x64dbg/files/snapshots/snapshot_2025-08-19_19-40.zip"
-sha1 = "59aceebe442319400e38fa651ceac8df507d9d93"
+url = "https://sourceforge.net/projects/x64dbg/files/snapshots/snapshot_2026-05-27_12-11.zip"
+sha1 = "4f70bf300e79e0a88d59ab3bfe68d22daf003cea"
 include-after = ["cmake/x64dbg.cmake"]
 
 [template.plugin]
