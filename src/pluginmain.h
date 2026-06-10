@@ -2,7 +2,7 @@
 
 // Plugin information
 #define PLUGIN_NAME "x64dbg-automate"
-#define PLUGIN_VERSION 2
+#define PLUGIN_VERSION 3
 
 #include "pluginsdk/bridgemain.h"
 #include "pluginsdk/_plugins.h"

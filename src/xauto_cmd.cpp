@@ -544,6 +544,10 @@ void disassemble_at(msgpack::object root, msgpack::sbuffer& response_buffer) {
     std::string symbolized_instruction = std::string(instr.instruction);
     if(GuiGetDisassembly(addr, symbolized_disassembly)) {
         symbolized_instruction = std::string(symbolized_disassembly);
+        // GuiGetDisassembly leaves a trailing separator space on operand-less instructions
+        while(!symbolized_instruction.empty() && symbolized_instruction.back() == ' ') {
+            symbolized_instruction.pop_back();
+        }
     }
 
     msgpack::pack(response_buffer, DisasmTup(
