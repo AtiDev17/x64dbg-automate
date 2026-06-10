@@ -531,6 +531,7 @@ void dbg_is_valid_read_ptr(msgpack::object root, msgpack::sbuffer& response_buff
 void disassemble_at(msgpack::object root, msgpack::sbuffer& response_buffer) {
     size_t addr;
     DISASM_INSTR instr;
+    char symbolized_disassembly[GUI_MAX_DISASSEMBLY_SIZE];
 
     if(root.via.array.size < 2 || root.via.array.ptr[1].type != msgpack::type::POSITIVE_INTEGER) {
         msgpack::pack(response_buffer, false);
@@ -539,8 +540,15 @@ void disassemble_at(msgpack::object root, msgpack::sbuffer& response_buffer) {
 
     root.via.array.ptr[1].convert(addr);
     DbgDisasmAt(addr, &instr);
+
+    std::string symbolized_instruction = std::string(instr.instruction);
+    if(GuiGetDisassembly(addr, symbolized_disassembly)) {
+        symbolized_instruction = std::string(symbolized_disassembly);
+    }
+
     msgpack::pack(response_buffer, DisasmTup(
         std::string(instr.instruction),
+        symbolized_instruction,
         instr.argcount,
         instr.instr_size,
         instr.type,

@@ -67,7 +67,7 @@ void dbg_write_setting_uint(msgpack::object root, msgpack::sbuffer& response_buf
 void dbg_is_valid_read_ptr(msgpack::object root, msgpack::sbuffer& response_buffer);
 
 typedef std::tuple<std::string, size_t, size_t, size_t, size_t, size_t> DisasmArgTup;
-typedef std::tuple<std::string, size_t, size_t, size_t, std::array<DisasmArgTup, 3>> DisasmTup;
+typedef std::tuple<std::string, std::string, size_t, size_t, size_t, std::array<DisasmArgTup, 3>> DisasmTup;
 void disassemble_at(msgpack::object root, msgpack::sbuffer& response_buffer);
 void assemble_at(msgpack::object root, msgpack::sbuffer& response_buffer);
 
