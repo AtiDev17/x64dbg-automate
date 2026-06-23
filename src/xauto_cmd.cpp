@@ -710,8 +710,18 @@ void get_log(msgpack::object root, msgpack::sbuffer& response_buffer) {
         root.via.array.ptr[1].type == msgpack::type::POSITIVE_INTEGER)
         root.via.array.ptr[1].convert(since_index);
 
-    auto snap = g_log_buffer.get_since(since_index);
-    msgpack::pack(response_buffer, std::make_tuple(snap.next_index, snap.entries));
+    size_t limit = 0;
+    if (root.via.array.size >= 3 &&
+        root.via.array.ptr[2].type == msgpack::type::POSITIVE_INTEGER)
+        root.via.array.ptr[2].convert(limit);
+
+    std::string filter;
+    if (root.via.array.size >= 4 &&
+        root.via.array.ptr[3].type == msgpack::type::STR)
+        root.via.array.ptr[3].convert(filter);
+
+    auto snap = g_log_buffer.get_since(since_index, limit, filter);
+    msgpack::pack(response_buffer, std::make_tuple(snap.next_index, snap.entries, snap.remaining, snap.evicted));
 }
 
 std::wstring get_session_filename(size_t session_pid) {

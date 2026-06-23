@@ -14,9 +14,16 @@ public:
 
     struct Snapshot {
         std::vector<std::string> entries;
-        size_t next_index;
+        size_t next_index;  // absolute index after the last returned entry; pass as since_index on the next call
+        size_t remaining;   // matching entries beyond the returned set (0 when everything fits or limit=0)
+        size_t evicted;     // entries between requested since_index and oldest available (lost to buffer cap)
     };
-    Snapshot get_since(size_t since_index) const;
+    // limit=0  -> no limit (return all matching entries)
+    // filter="" -> no filter (return all entries)
+    // Head semantics: the FIRST `limit` matching entries are returned.
+    // next_index points just past the last returned entry (not the buffer end when truncated).
+    // remaining > 0 means the caller should call again with since_index=next_index.
+    Snapshot get_since(size_t since_index, size_t limit = 0, const std::string& filter = "") const;
 
 private:
     mutable std::mutex      mtx;

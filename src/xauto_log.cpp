@@ -31,13 +31,53 @@ void LogBuffer::clear() {
     base_index  = 0;
 }
 
-LogBuffer::Snapshot LogBuffer::get_since(size_t since_index) const {
+LogBuffer::Snapshot LogBuffer::get_since(size_t since_index, size_t limit, const std::string& filter) const {
     std::lock_guard<std::mutex> lk(mtx);
     Snapshot snap;
+    snap.evicted   = (since_index < base_index) ? (base_index - since_index) : 0;
+    snap.remaining = 0;
+
     size_t start = (since_index > base_index) ? (since_index - base_index) : 0;
-    for (size_t i = start; i < entries.size(); i++)
-        snap.entries.push_back(entries[i]);
-    snap.next_index = base_index + entries.size();
+
+    // Head semantics: collect the first `limit` matching entries, count the rest.
+    // When filter is set, filtering is done at the line level within each entry:
+    // only lines containing the filter string are kept; entries with no matching
+    // lines are skipped entirely.
+    bool limit_hit = false;
+    size_t last_i  = start;
+    for (size_t i = start; i < entries.size(); i++) {
+        // Line-level filtering: when a filter is active, split the entry on '\n'
+        // and retain only matching lines. Skip the entry if none match.
+        std::string candidate;
+        if (!filter.empty()) {
+            std::string_view src(entries[i]);
+            std::string filtered;
+            while (!src.empty()) {
+                auto nl = src.find('\n');
+                std::string_view line = (nl == std::string_view::npos) ? src : src.substr(0, nl + 1);
+                if (line.find(filter) != std::string_view::npos)
+                    filtered.append(line);
+                src = (nl == std::string_view::npos) ? std::string_view{} : src.substr(nl + 1);
+            }
+            if (filtered.empty()) continue;
+            candidate = std::move(filtered);
+        } else {
+            candidate = entries[i];
+        }
+        if (!limit_hit) {
+            snap.entries.push_back(std::move(candidate));
+            last_i = i + 1;
+            if (limit > 0 && snap.entries.size() >= limit)
+                limit_hit = true;
+        } else {
+            snap.remaining++;
+        }
+    }
+
+    // next_index points just past the last returned entry.
+    // When nothing was truncated it equals the true buffer end.
+    snap.next_index = limit_hit ? (base_index + last_i) : (base_index + entries.size());
+
     return snap;
 }
 
