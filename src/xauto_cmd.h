@@ -3,7 +3,7 @@
 #include <cstdint>
 
 
-constexpr const char* XAUTO_COMPAT_VERSION = "lilac_bonnet"; // TODO: externalize
+constexpr const char* XAUTO_COMPAT_VERSION = "ghost_fungus"; // TODO: externalize
 
 
 class XAutoErrorResponse {
