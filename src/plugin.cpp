@@ -1,5 +1,6 @@
 #include "plugin.h"
 #include "pluginmain.h"
+#include "xauto_log.h"
 #include "resource.h"
 
 #include <string>
@@ -15,7 +16,7 @@ void cb_sys_breakpoint(CBTYPE cbType, void* callbackInfo)
     PLUG_CB_SYSTEMBREAKPOINT* bp = (PLUG_CB_SYSTEMBREAKPOINT*)callbackInfo;
     msgpack::sbuffer outbuf;
     msgpack::pack(outbuf, std::tuple<std::string, size_t>(std::string("EVENT_SYSTEMBREAKPOINT"), (size_t)bp->reserved));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_breakpoint(CBTYPE cbType, void* callbackInfo)
@@ -63,7 +64,7 @@ void cb_breakpoint(CBTYPE cbType, void* callbackInfo)
         std::string(bp->breakpoint->commandText),
         std::string(bp->breakpoint->commandCondition)
     ));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_create_thread(CBTYPE cbType, void* callbackInfo)
@@ -72,7 +73,7 @@ void cb_create_thread(CBTYPE cbType, void* callbackInfo)
     msgpack::sbuffer outbuf;
     msgpack::pack(outbuf, std::tuple<std::string, size_t, size_t, size_t>(
         std::string("EVENT_CREATE_THREAD"), (size_t)ct->dwThreadId, (size_t)ct->CreateThread->lpThreadLocalBase, (size_t)ct->CreateThread->lpStartAddress));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_exit_thread(CBTYPE cbType, void* callbackInfo)
@@ -81,7 +82,7 @@ void cb_exit_thread(CBTYPE cbType, void* callbackInfo)
     msgpack::sbuffer outbuf;
     msgpack::pack(outbuf, std::tuple<std::string, size_t, size_t>(
         std::string("EVENT_EXIT_THREAD"), (size_t)et->dwThreadId, (size_t)et->ExitThread->dwExitCode));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_load_dll(CBTYPE cbType, void* callbackInfo)
@@ -90,7 +91,7 @@ void cb_load_dll(CBTYPE cbType, void* callbackInfo)
     msgpack::sbuffer outbuf;
     msgpack::pack(outbuf, std::tuple<std::string, std::string, size_t>(
         std::string("EVENT_LOAD_DLL"), std::string(ld->modname), (size_t)ld->LoadDll->lpBaseOfDll));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_unload_dll(CBTYPE cbType, void* callbackInfo)
@@ -99,7 +100,7 @@ void cb_unload_dll(CBTYPE cbType, void* callbackInfo)
     msgpack::sbuffer outbuf;
     msgpack::pack(outbuf, std::tuple<std::string, size_t>(
         std::string("EVENT_UNLOAD_DLL"), (size_t)udl->UnloadDll->lpBaseOfDll));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_debugstr(CBTYPE cbType, void* callbackInfo)
@@ -115,7 +116,7 @@ void cb_debugstr(CBTYPE cbType, void* callbackInfo)
 
     msgpack::pack(outbuf, std::tuple<std::string, std::vector<uint8_t>>(
         std::string("EVENT_OUTPUT_DEBUG_STRING"), membuf));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_exception(CBTYPE cbType, void* callbackInfo)
@@ -137,7 +138,7 @@ void cb_exception(CBTYPE cbType, void* callbackInfo)
         (size_t)exc->Exception->ExceptionRecord.NumberParameters,
         params,
         exc->Exception->dwFirstChance));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_stepped(CBTYPE cbType, void* callbackInfo)
@@ -148,7 +149,7 @@ void cb_stepped(CBTYPE cbType, void* callbackInfo)
 
     msgpack::pack(outbuf, std::tuple<std::string>(
         std::string("EVENT_STEPPED")));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_resume_debug(CBTYPE cbType, void* callbackInfo)
@@ -157,7 +158,7 @@ void cb_resume_debug(CBTYPE cbType, void* callbackInfo)
     msgpack::sbuffer outbuf;
     msgpack::pack(outbuf, std::tuple<std::string>(
         std::string("EVENT_RESUME_DEBUG")));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_pause_debug(CBTYPE cbType, void* callbackInfo)
@@ -166,7 +167,7 @@ void cb_pause_debug(CBTYPE cbType, void* callbackInfo)
     msgpack::sbuffer outbuf;
     msgpack::pack(outbuf, std::tuple<std::string>(
         std::string("EVENT_PAUSE_DEBUG")));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_attach(CBTYPE cbType, void* callbackInfo)
@@ -175,7 +176,7 @@ void cb_attach(CBTYPE cbType, void* callbackInfo)
     msgpack::sbuffer outbuf;
     msgpack::pack(outbuf, std::tuple<std::string, size_t>(
         std::string("EVENT_ATTACH"), (size_t)at->dwProcessId));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_detach(CBTYPE cbType, void* callbackInfo)
@@ -184,16 +185,17 @@ void cb_detach(CBTYPE cbType, void* callbackInfo)
     msgpack::sbuffer outbuf;
     msgpack::pack(outbuf, std::tuple<std::string, size_t>(
         std::string("EVENT_DETACH"), (size_t)dt->fdProcessInfo->dwProcessId));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_init_debug(CBTYPE cbType, void* callbackInfo)
 {
+    g_log_buffer.clear();
     PLUG_CB_INITDEBUG* id = (PLUG_CB_INITDEBUG*)callbackInfo;
     msgpack::sbuffer outbuf;
     msgpack::pack(outbuf, std::tuple<std::string, std::string>(
         std::string("EVENT_INIT_DEBUG"), std::string(id->szFileName)));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_stop_debug(CBTYPE cbType, void* callbackInfo)
@@ -202,7 +204,7 @@ void cb_stop_debug(CBTYPE cbType, void* callbackInfo)
     msgpack::sbuffer outbuf;
     msgpack::pack(outbuf, std::tuple<std::string>(
         std::string("EVENT_STOP_DEBUG")));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_create_process(CBTYPE cbType, void* callbackInfo)
@@ -215,7 +217,7 @@ void cb_create_process(CBTYPE cbType, void* callbackInfo)
         (size_t)cp->fdProcessInfo->dwThreadId, 
         (size_t)cp->CreateProcessInfo->lpStartAddress,
         std::string(cp->DebugFileName)));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 void cb_exit_process(CBTYPE cbType, void* callbackInfo)
@@ -224,7 +226,7 @@ void cb_exit_process(CBTYPE cbType, void* callbackInfo)
     msgpack::sbuffer outbuf;
     msgpack::pack(outbuf, std::tuple<std::string, size_t>(
         std::string("EVENT_EXIT_PROCESS"), (size_t)ep->ExitProcess->dwExitCode));
-    srv->pub_socket.send(zmq::buffer(outbuf.data(), outbuf.size()), zmq::send_flags::none);
+    srv->pub_send(outbuf);
 }
 
 static void EnableRemoteControls(HWND hDlg, BOOL enable)
@@ -347,6 +349,7 @@ bool pluginInit(PLUG_INITSTRUCT* initStruct)
 {
     dprintf("pluginInit(pluginHandle: %d)\n", pluginHandle);
     last_cbinfo = nullptr;
+    log_hook_install();
     _plugin_registercallback(pluginHandle, CB_BREAKPOINT, cb_breakpoint);
     _plugin_registercallback(pluginHandle, CB_SYSTEMBREAKPOINT, cb_sys_breakpoint);
     _plugin_registercallback(pluginHandle, CB_CREATETHREAD, cb_create_thread);
@@ -371,6 +374,7 @@ bool pluginInit(PLUG_INITSTRUCT* initStruct)
 void pluginStop()
 {
     dprintf("pluginStop(pluginHandle: %d)\n", pluginHandle);
+    log_hook_uninstall();
     srv->release_session();
 }
 

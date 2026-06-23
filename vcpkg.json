@@ -7,7 +7,8 @@
     {
       "name": "msgpack",
       "features": ["boost"]
-    }
+    },
+    "detours"
   ],
   "description": "",
   "name": "x64dbg-automate",

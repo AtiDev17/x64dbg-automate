@@ -1,6 +1,7 @@
 #include "pluginmain.h"
 #include "xauto_server.h"
 #include "xauto_cmd.h"
+#include "xauto_log.h"
 
 #include <thread>
 #include <fstream>
@@ -74,6 +75,8 @@ int XAutoServer::_dispatch_cmd(msgpack::object root, msgpack::sbuffer& response_
             get_comment_at(root, response_buffer);
         } else if (cmd == XAUTO_REQ_GET_SYMBOL) {
             get_symbol_at(root, response_buffer);
+        } else if (cmd == XAUTO_REQ_GET_LOG) {
+            get_log(root, response_buffer);
         } else if (cmd == XAUTO_REQ_QUIT) {
             msgpack::pack(response_buffer, "OK_QUITTING");
             return DISPATCH_EXIT;

@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <mutex>
 #include <zmq.hpp>
 #include <msgpack.hpp>
 
@@ -30,6 +31,7 @@ constexpr const char* XAUTO_REQ_GET_BREAKPOINTS = "XAUTO_REQ_GET_BREAKPOINTS";
 constexpr const char* XAUTO_REQ_GET_LABEL = "XAUTO_REQ_GET_LABEL";
 constexpr const char* XAUTO_REQ_GET_COMMENT = "XAUTO_REQ_GET_COMMENT";
 constexpr const char* XAUTO_REQ_GET_SYMBOL = "XAUTO_REQ_GET_SYMBOL";
+constexpr const char* XAUTO_REQ_GET_LOG = "XAUTO_REQ_GET_LOG";
 
 class XAutoServer {
     public:
@@ -42,7 +44,13 @@ class XAutoServer {
     XAutoServer();
     void release_session();
 
+    void pub_send(msgpack::sbuffer& buf) {
+        std::lock_guard<std::mutex> lock(pub_mutex);
+        pub_socket.send(zmq::buffer(buf.data(), buf.size()), zmq::send_flags::none);
+    }
+
     private:
+    std::mutex pub_mutex;
     size_t session_pid = 0;
     zmq::context_t context;
 

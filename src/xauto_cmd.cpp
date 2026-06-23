@@ -1,4 +1,5 @@
 #include "xauto_cmd.h"
+#include "xauto_log.h"
 #include <pluginsdk/bridgemain.h>
 #include "pluginmain.h"
 #include <TlHelp32.h>
@@ -701,6 +702,16 @@ void get_symbol_at(msgpack::object root, msgpack::sbuffer& response_buffer) {
         }
     }
     BridgeFree(info);
+}
+
+void get_log(msgpack::object root, msgpack::sbuffer& response_buffer) {
+    size_t since_index = 0;
+    if (root.via.array.size >= 2 &&
+        root.via.array.ptr[1].type == msgpack::type::POSITIVE_INTEGER)
+        root.via.array.ptr[1].convert(since_index);
+
+    auto snap = g_log_buffer.get_since(since_index);
+    msgpack::pack(response_buffer, std::make_tuple(snap.next_index, snap.entries));
 }
 
 std::wstring get_session_filename(size_t session_pid) {
