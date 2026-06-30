@@ -47,6 +47,8 @@ After publishing a GitHub release here and the matching pyclient to PyPI, verify
 
 Keep all commits authored solely as the repo owner (Darius Houle) — do not add `Co-Authored-By` or other attribution trailers.
 
+Do not add Claude/AI attribution to any GitHub text on this project — commit messages, PR titles and descriptions, PR/issue comments, and issue bodies. This includes the `🤖 Generated with Claude Code` footer and any `Co-Authored-By: Claude` line. All such text must read as authored solely by the repo owner.
+
 ## Settings
 
 Stored in x64dbg.ini under `[XAutomate]`. Key settings:
