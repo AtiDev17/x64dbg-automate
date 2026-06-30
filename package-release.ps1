@@ -1,7 +1,7 @@
 .\build-install-32.cmd
 .\build-install-64.cmd
 
-$version = "0.7.0-lilac_bonnet"
+$version = "0.8.0-ghost_fungus"
 
 if (Test-Path "release32-$version.zip") {
     Remove-Item "release32-$version.zip"

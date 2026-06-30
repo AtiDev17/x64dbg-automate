@@ -3,7 +3,7 @@
 #include <cstdint>
 
 
-constexpr const char* XAUTO_COMPAT_VERSION = "lilac_bonnet"; // TODO: externalize
+constexpr const char* XAUTO_COMPAT_VERSION = "ghost_fungus"; // TODO: externalize
 
 
 class XAutoErrorResponse {
@@ -79,4 +79,5 @@ void get_breakpoints(msgpack::object root, msgpack::sbuffer& response_buffer);
 void get_label_at(msgpack::object root, msgpack::sbuffer& response_buffer);
 void get_comment_at(msgpack::object root, msgpack::sbuffer& response_buffer);
 void get_symbol_at(msgpack::object root, msgpack::sbuffer& response_buffer);
+void get_log(msgpack::object root, msgpack::sbuffer& response_buffer);
 std::wstring get_session_filename(size_t session_pid);

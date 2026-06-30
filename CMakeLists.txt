@@ -65,15 +65,26 @@ find_package(msgpack-cxx REQUIRED)
 find_package(Boost REQUIRED)
 
 # Target: x64dbg-automate
+set(CMKR_TARGET x64dbg-automate)
+find_path(DETOURS_INCLUDE_DIRS "detours/detours.h" REQUIRED)
+find_library(DETOURS_LIBRARY detours REQUIRED)
+add_library(detours_target STATIC IMPORTED)
+set_target_properties(detours_target PROPERTIES
+    IMPORTED_LOCATION "${DETOURS_LIBRARY}"
+    INTERFACE_INCLUDE_DIRECTORIES "${DETOURS_INCLUDE_DIRS}"
+)
+
 set(x64dbg-automate_SOURCES
 	"src/plugin.cpp"
 	"src/pluginmain.cpp"
 	"src/xauto_cmd.cpp"
+	"src/xauto_log.cpp"
 	"src/xauto_server.cpp"
 	"src/plugin.h"
 	"src/pluginmain.h"
 	"src/resource.h"
 	"src/xauto_cmd.h"
+	"src/xauto_log.h"
 	"src/xauto_server.h"
 	"src/plugin.rc"
 	cmake.toml
@@ -91,5 +102,6 @@ target_compile_features(x64dbg-automate PUBLIC
 target_link_libraries(x64dbg-automate PUBLIC
 	cppzmq
 	msgpack-cxx
+	detours_target
 )
 
