@@ -19,9 +19,12 @@ public:
         size_t evicted;     // entries between requested since_index and oldest available (lost to buffer cap)
     };
     // limit=0  -> no limit (return all matching entries)
-    // filter="" -> no filter (return all entries)
+    // filter="" -> no filter (return all entries); otherwise a case-sensitive plain
+    //              substring (not a regex), matched per line within each entry.
     // Head semantics: the FIRST `limit` matching entries are returned.
     // next_index points just past the last returned entry (not the buffer end when truncated).
+    //              Monotonic only within a session: clear() resets base_index to 0, so a
+    //              next_index carried over from a prior session restarts at the new log.
     // remaining > 0 means the caller should call again with since_index=next_index.
     Snapshot get_since(size_t since_index, size_t limit = 0, const std::string& filter = "") const;
 

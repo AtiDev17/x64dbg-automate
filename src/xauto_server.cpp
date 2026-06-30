@@ -226,7 +226,14 @@ bool XAutoServer::acquire_session() {
 
 void XAutoServer::release_session() {
     rep_socket.close();
-    pub_socket.close();
+    {
+        // Serialize against pub_send(): the log hook may be mid-publish on
+        // x64dbg's log thread while we tear down. Holding pub_mutex here ensures
+        // close() completes before any racing send() begins; that send then hits
+        // a closed socket and throws, which capture_log() swallows.
+        std::lock_guard<std::mutex> lock(pub_mutex);
+        pub_socket.close();
+    }
 
     auto sess_filename = get_session_filename(session_pid);
     if (_wremove(sess_filename.c_str()) != 0) {
