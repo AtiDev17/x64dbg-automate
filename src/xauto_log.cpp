@@ -85,7 +85,7 @@ LogBuffer::Snapshot LogBuffer::get_since(size_t since_index, size_t limit, const
 // Hook
 // ---------------------------------------------------------------------------
 
-using GuiAddLogMessage_t = void(WINAPI*)(const char*);
+using GuiAddLogMessage_t = void(__cdecl*)(const char*);
 static GuiAddLogMessage_t orig_GuiAddLogMessage = nullptr;
 static GuiAddLogMessage_t orig_GuiAddLogMessageHtml = nullptr;
 
@@ -122,18 +122,22 @@ static void capture_log(const char* msg) {
     in_hook = false;
 }
 
-void WINAPI hook_GuiAddLogMessage(const char* msg) {
+void __cdecl hook_GuiAddLogMessage(const char* msg) {
     orig_GuiAddLogMessage(msg);
     capture_log(msg);
 }
 
-void WINAPI hook_GuiAddLogMessageHtml(const char* msg) {
+void __cdecl hook_GuiAddLogMessageHtml(const char* msg) {
     orig_GuiAddLogMessageHtml(msg);
     capture_log(msg);
 }
 
 void log_hook_install() {
+#ifdef _WIN64
     HMODULE hBridge = GetModuleHandleA("x64bridge.dll");
+#else
+    HMODULE hBridge = GetModuleHandleA("x32bridge.dll");
+#endif
     if (!hBridge) return;
     orig_GuiAddLogMessage = reinterpret_cast<GuiAddLogMessage_t>(
         GetProcAddress(hBridge, "GuiAddLogMessage"));
