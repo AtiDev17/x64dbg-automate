@@ -27,14 +27,17 @@ Prefer these over manual cmake + copy steps:
 
 ## Release e2e smoke test
 
-After publishing a GitHub release here and the matching pyclient to PyPI, verify the deployed artifacts work together — using only published artifacts, nothing from the local working trees:
+After publishing a GitHub release here and the matching pyclient to PyPI, verify the deployed artifacts work together — using only published artifacts, nothing from the local working trees. **Both bitnesses ship, so both get exercised** — see step 5.
 
-1. **Pristine x64dbg** — copy `build64/_deps/x64dbg-src/release` (the extracted snapshot, no config/plugins) to a temp dir.
-2. **Plugin from GitHub** — download `release64-<version>.zip` from the release, copy `Release/x64dbg-automate.dp64` + `Release/libzmq-mt-4_3_5.dll` into `<temp x64dbg>/x64/plugins/`.
+1. **Pristine x64dbg** — copy `build64/_deps/x64dbg-src/release` (the extracted snapshot, no config/plugins) to a temp dir. The snapshot contains both `x32/` and `x64/`, so one copy serves both legs.
+2. **Plugin from GitHub** — download `release64-<version>.zip` and `release32-<version>.zip` from the release. Copy `Release/x64dbg-automate.dp64` + `Release/libzmq-mt-4_3_5.dll` from the 64-bit zip into `<temp>/x64/plugins/`, and `Release/x64dbg-automate.dp32` + its `libzmq-mt-4_3_5.dll` from the 32-bit zip into `<temp>/x32/plugins/`. The two zips carry different `libzmq` builds — do not cross them.
 3. **Client from PyPI** — `python -m venv <temp>/venv`, then `pip install x64dbg-automate`; confirm `pip show` reports the new version (proves PyPI publish is live).
-4. **Happy path** — with the venv python: `start_session` against the temp `x64dbg.exe` (the session start asserts the compat handshake), then exercise whatever surface the release changed and `terminate_session`.
-5. **Compat gate** — `pip install x64dbg-automate==<previous version>` in the same venv and confirm `start_session` raises `Incompatible x64dbg plugin and client versions ...` (only meaningful when the protocol codename changed).
-6. **Cleanup** — kill any orphaned `x64dbg` processes spawned from the temp dir (the rejection test can leak one), delete the temp dir.
+4. **Happy path, 64-bit** — with the venv python: `start_session` against `<temp>/x64/x64dbg.exe` (the session start asserts the compat handshake), then exercise whatever surface the release changed and `terminate_session`.
+5. **Happy path, 32-bit** — repeat step 4 against `<temp>/x32/x32dbg.exe`. Do not skip this leg because 64-bit passed: bitness-conditional code can fail silently on x32dbg with x64dbg perfectly healthy, so a green 64-bit run is not evidence about 32-bit.
+6. **Compat gate** — `pip install x64dbg-automate==<previous version>` in the same venv and confirm `start_session` raises `Incompatible x64dbg plugin and client versions ...` (only meaningful when the protocol codename changed).
+7. **Cleanup** — kill any orphaned `x64dbg`/`x32dbg` processes spawned from the temp dir (the rejection test can leak one), delete the temp dir.
+
+For a broader pre-tag check against the dev install rather than published artifacts, the pyclient suite is bitness-parameterized: run it once with `TEST_BITNESS=64` and once with `TEST_BITNESS=32`.
 
 ## Project structure
 
