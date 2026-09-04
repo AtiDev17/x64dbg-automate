@@ -778,6 +778,29 @@ void set_breakpoint_log(msgpack::object root, msgpack::sbuffer& response_buffer)
     msgpack::pack(response_buffer, result);
 }
 
+void set_breakpoint_command(msgpack::object root, msgpack::sbuffer& response_buffer) {
+    size_t addr;
+    std::string command_text;
+
+    if(root.via.array.size < 3 || root.via.array.ptr[1].type != msgpack::type::POSITIVE_INTEGER || root.via.array.ptr[2].type != msgpack::type::STR) {
+        XAutoErrorResponse resp_obj = {"XERROR_BAD_BP", "Invalid or missing breakpoint command parameters"};
+        msgpack::pack(response_buffer, resp_obj);
+        return;
+    }
+
+    root.via.array.ptr[1].convert(addr);
+    root.via.array.ptr[2].convert(command_text);
+
+    BP_REF ref;
+    if(!DbgFunctions()->BpRefVa(&ref, bp_normal, addr)) {
+        msgpack::pack(response_buffer, false);
+        return;
+    }
+
+    bool result = DbgFunctions()->BpSetFieldText(&ref, bpf_commandtext, command_text.c_str());
+    msgpack::pack(response_buffer, result);
+}
+
 void get_stack_trace(msgpack::sbuffer& response_buffer) {
     DBGCALLSTACK callstack;
     memset(&callstack, 0, sizeof(callstack));

@@ -81,6 +81,8 @@ int XAutoServer::_dispatch_cmd(msgpack::object root, msgpack::sbuffer& response_
             set_breakpoint_condition(root, response_buffer);
         } else if (cmd == XAUTO_REQ_SET_BREAKPOINT_LOG) {
             set_breakpoint_log(root, response_buffer);
+        } else if (cmd == XAUTO_REQ_SET_BREAKPOINT_COMMAND) {
+            set_breakpoint_command(root, response_buffer);
         } else if (cmd == XAUTO_REQ_GET_STACK_TRACE) {
             get_stack_trace(response_buffer);
         } else if (cmd == XAUTO_REQ_SEARCH_MEMORY) {

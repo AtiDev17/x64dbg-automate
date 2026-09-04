@@ -82,6 +82,7 @@ void get_symbol_at(msgpack::object root, msgpack::sbuffer& response_buffer);
 void get_log(msgpack::object root, msgpack::sbuffer& response_buffer);
 void set_breakpoint_condition(msgpack::object root, msgpack::sbuffer& response_buffer);
 void set_breakpoint_log(msgpack::object root, msgpack::sbuffer& response_buffer);
+void set_breakpoint_command(msgpack::object root, msgpack::sbuffer& response_buffer);
 
 typedef std::tuple<size_t, size_t, std::string, std::string> StackFrameTup;
 void get_stack_trace(msgpack::sbuffer& response_buffer);
