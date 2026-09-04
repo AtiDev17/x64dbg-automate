@@ -4,6 +4,7 @@
 #include "pluginmain.h"
 #include <TlHelp32.h>
 #include <Shlwapi.h>
+#include <algorithm>
 
 
 void get_debugger_pid(msgpack::sbuffer& response_buffer) {
@@ -893,7 +894,7 @@ void read_string_at(msgpack::object root, msgpack::sbuffer& response_buffer) {
 
     if(!result) {
         // Fallback: read raw bytes and extract null-terminated string
-        size_t read_len = min(max_len, (size_t)MAX_STRING_SIZE - 1);
+        size_t read_len = (std::min)(max_len, (size_t)MAX_STRING_SIZE - 1);
         std::vector<uint8_t> buf(read_len);
         if(!DbgMemRead(addr, buf.data(), read_len)) {
             msgpack::pack(response_buffer, std::tuple<bool, std::string>(false, ""));
