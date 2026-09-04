@@ -24,16 +24,6 @@ jobs:
         with:
           arch: ${{ matrix.platform == 'x64' && 'amd64' || 'x86' }}
 
-      - name: Cache vcpkg
-        uses: actions/cache@v4
-        with:
-          path: |
-            build/_deps/vcpkg-src
-            build/vcpkg_installed
-          key: vcpkg-${{ matrix.platform }}-${{ hashFiles('cmake.toml') }}
-          restore-keys: |
-            vcpkg-${{ matrix.platform }}-
-
       - name: Configure CMake
         run: |
           cmake -B build -G "Visual Studio 17 2022" -A ${{ matrix.platform == 'x64' && 'x64' || 'Win32' }}
