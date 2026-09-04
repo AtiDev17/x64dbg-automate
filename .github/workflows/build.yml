@@ -35,6 +35,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: plugin-${{ matrix.platform }}
-          path: build/Release/*.{dp64,dp32,dll}
+          path: |
+            build/Release/*.dp64
+            build/Release/*.dp32
+            build/Release/*.dll
           if-no-files-found: warn
           retention-days: 1
