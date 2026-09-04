@@ -724,6 +724,192 @@ void get_log(msgpack::object root, msgpack::sbuffer& response_buffer) {
     msgpack::pack(response_buffer, std::make_tuple(snap.next_index, snap.entries, snap.remaining, snap.evicted));
 }
 
+void set_breakpoint_condition(msgpack::object root, msgpack::sbuffer& response_buffer) {
+    size_t addr;
+    std::string condition;
+
+    if(root.via.array.size < 3 || root.via.array.ptr[1].type != msgpack::type::POSITIVE_INTEGER || root.via.array.ptr[2].type != msgpack::type::STR) {
+        XAutoErrorResponse resp_obj = {"XERROR_BAD_BP", "Invalid or missing breakpoint condition parameters"};
+        msgpack::pack(response_buffer, resp_obj);
+        return;
+    }
+
+    root.via.array.ptr[1].convert(addr);
+    root.via.array.ptr[2].convert(condition);
+
+    BP_REF ref;
+    if(!DbgFunctions()->BpRefVa(&ref, bp_normal, addr)) {
+        msgpack::pack(response_buffer, false);
+        return;
+    }
+
+    bool result = DbgFunctions()->BpSetFieldText(&ref, bpf_breakcondition, condition.c_str());
+    msgpack::pack(response_buffer, result);
+}
+
+void set_breakpoint_log(msgpack::object root, msgpack::sbuffer& response_buffer) {
+    size_t addr;
+    std::string log_text;
+    bool silent = false;
+
+    if(root.via.array.size < 3 || root.via.array.ptr[1].type != msgpack::type::POSITIVE_INTEGER || root.via.array.ptr[2].type != msgpack::type::STR) {
+        XAutoErrorResponse resp_obj = {"XERROR_BAD_BP", "Invalid or missing breakpoint log parameters"};
+        msgpack::pack(response_buffer, resp_obj);
+        return;
+    }
+
+    root.via.array.ptr[1].convert(addr);
+    root.via.array.ptr[2].convert(log_text);
+    if(root.via.array.size >= 4 && root.via.array.ptr[3].type == msgpack::type::BOOLEAN) {
+        root.via.array.ptr[3].convert(silent);
+    }
+
+    BP_REF ref;
+    if(!DbgFunctions()->BpRefVa(&ref, bp_normal, addr)) {
+        msgpack::pack(response_buffer, false);
+        return;
+    }
+
+    bool result = DbgFunctions()->BpSetFieldText(&ref, bpf_logtext, log_text.c_str());
+    if(result) {
+        DbgFunctions()->BpSetFieldNumber(&ref, bpf_silent, silent ? 1 : 0);
+    }
+    msgpack::pack(response_buffer, result);
+}
+
+void get_stack_trace(msgpack::sbuffer& response_buffer) {
+    DBGCALLSTACK callstack;
+    memset(&callstack, 0, sizeof(callstack));
+    DbgFunctions()->GetCallStack(&callstack);
+
+    std::vector<StackFrameTup> frames;
+    for(int i = 0; i < callstack.total; i++) {
+        auto& entry = callstack.entries[i];
+        STACK_COMMENT comment;
+        memset(&comment, 0, sizeof(comment));
+        DbgStackCommentGet(entry.addr, &comment);
+        frames.push_back(StackFrameTup(
+            entry.addr,
+            entry.from,
+            std::string(comment.color),
+            std::string(comment.comment)
+        ));
+    }
+
+    BridgeFree(callstack.entries);
+    msgpack::pack(response_buffer, frames);
+}
+
+void search_memory(msgpack::object root, msgpack::sbuffer& response_buffer) {
+    size_t addr;
+    size_t size;
+    std::vector<uint8_t> pattern;
+
+    if(root.via.array.size < 4 || root.via.array.ptr[1].type != msgpack::type::POSITIVE_INTEGER || root.via.array.ptr[2].type != msgpack::type::POSITIVE_INTEGER) {
+        XAutoErrorResponse resp_obj = {"XERROR_BAD_SEARCH", "Invalid or missing search parameters"};
+        msgpack::pack(response_buffer, resp_obj);
+        return;
+    }
+
+    root.via.array.ptr[1].convert(addr);
+    root.via.array.ptr[2].convert(size);
+
+    if(root.via.array.ptr[3].type == msgpack::type::BIN) {
+        root.via.array.ptr[3].convert(pattern);
+    } else if(root.via.array.ptr[3].type == msgpack::type::STR) {
+        std::string hex_str;
+        root.via.array.ptr[3].convert(hex_str);
+        for(size_t i = 0; i + 1 < hex_str.size(); i += 2) {
+            char byte_str[3] = { hex_str[i], hex_str[i + 1], 0 };
+            pattern.push_back((uint8_t)strtol(byte_str, nullptr, 16));
+        }
+    } else {
+        XAutoErrorResponse resp_obj = {"XERROR_BAD_SEARCH", "Pattern must be binary or hex string"};
+        msgpack::pack(response_buffer, resp_obj);
+        return;
+    }
+
+    if(pattern.empty() || size == 0) {
+        msgpack::pack(response_buffer, std::vector<size_t>());
+        return;
+    }
+
+    std::vector<uint8_t> buf(size);
+    if(!DbgMemRead(addr, buf.data(), size)) {
+        XAutoErrorResponse resp_obj = {"XERROR_READ_FAILED", "Memory read failed for search"};
+        msgpack::pack(response_buffer, resp_obj);
+        return;
+    }
+
+    std::vector<size_t> results;
+    for(size_t i = 0; i + pattern.size() <= buf.size(); i++) {
+        if(memcmp(buf.data() + i, pattern.data(), pattern.size()) == 0) {
+            results.push_back(addr + i);
+        }
+    }
+
+    msgpack::pack(response_buffer, results);
+}
+
+void get_threads(msgpack::sbuffer& response_buffer) {
+    THREADLIST threadlist;
+    memset(&threadlist, 0, sizeof(threadlist));
+    DbgGetThreadList(&threadlist);
+
+    std::vector<ThreadInfoTup> threads;
+    for(int i = 0; i < threadlist.count; i++) {
+        auto& info = threadlist.list[i];
+        threads.push_back(ThreadInfoTup(
+            info.BasicInfo.ThreadNumber,
+            info.BasicInfo.ThreadId,
+            info.BasicInfo.ThreadStartAddress,
+            info.BasicInfo.ThreadLocalBase,
+            std::string(info.BasicInfo.threadName)
+        ));
+    }
+
+    BridgeFree(threadlist.list);
+    msgpack::pack(response_buffer, threads);
+}
+
+void read_string_at(msgpack::object root, msgpack::sbuffer& response_buffer) {
+    size_t addr;
+    size_t max_len = 512;
+
+    if(root.via.array.size < 2 || root.via.array.ptr[1].type != msgpack::type::POSITIVE_INTEGER) {
+        XAutoErrorResponse resp_obj = {"XERROR_BAD_READ", "Invalid or missing address"};
+        msgpack::pack(response_buffer, resp_obj);
+        return;
+    }
+
+    root.via.array.ptr[1].convert(addr);
+    if(root.via.array.size >= 3 && root.via.array.ptr[2].type == msgpack::type::POSITIVE_INTEGER) {
+        root.via.array.ptr[2].convert(max_len);
+    }
+
+    char text[MAX_STRING_SIZE];
+    memset(text, 0, sizeof(text));
+    bool result = DbgGetStringAt(addr, text);
+
+    if(!result) {
+        // Fallback: read raw bytes and extract null-terminated string
+        size_t read_len = min(max_len, (size_t)MAX_STRING_SIZE - 1);
+        std::vector<uint8_t> buf(read_len);
+        if(!DbgMemRead(addr, buf.data(), read_len)) {
+            msgpack::pack(response_buffer, std::tuple<bool, std::string>(false, ""));
+            return;
+        }
+        size_t len = 0;
+        while(len < buf.size() && buf[len] != 0) {
+            len++;
+        }
+        msgpack::pack(response_buffer, std::tuple<bool, std::string>(len > 0, std::string((char*)buf.data(), len)));
+        return;
+    }
+
+    msgpack::pack(response_buffer, std::tuple<bool, std::string>(true, std::string(text)));
+}
+
 std::wstring get_session_filename(size_t session_pid) {
     wchar_t temp_path[MAX_PATH * 4];
     if (GetTempPathW(MAX_PATH * 2, temp_path) == 0) {

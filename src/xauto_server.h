@@ -32,6 +32,12 @@ constexpr const char* XAUTO_REQ_GET_LABEL = "XAUTO_REQ_GET_LABEL";
 constexpr const char* XAUTO_REQ_GET_COMMENT = "XAUTO_REQ_GET_COMMENT";
 constexpr const char* XAUTO_REQ_GET_SYMBOL = "XAUTO_REQ_GET_SYMBOL";
 constexpr const char* XAUTO_REQ_GET_LOG = "XAUTO_REQ_GET_LOG";
+constexpr const char* XAUTO_REQ_SET_BREAKPOINT_CONDITION = "XAUTO_REQ_SET_BREAKPOINT_CONDITION";
+constexpr const char* XAUTO_REQ_SET_BREAKPOINT_LOG = "XAUTO_REQ_SET_BREAKPOINT_LOG";
+constexpr const char* XAUTO_REQ_GET_STACK_TRACE = "XAUTO_REQ_GET_STACK_TRACE";
+constexpr const char* XAUTO_REQ_SEARCH_MEMORY = "XAUTO_REQ_SEARCH_MEMORY";
+constexpr const char* XAUTO_REQ_GET_THREADS = "XAUTO_REQ_GET_THREADS";
+constexpr const char* XAUTO_REQ_READ_STRING = "XAUTO_REQ_READ_STRING";
 
 class XAutoServer {
     public:

@@ -77,6 +77,18 @@ int XAutoServer::_dispatch_cmd(msgpack::object root, msgpack::sbuffer& response_
             get_symbol_at(root, response_buffer);
         } else if (cmd == XAUTO_REQ_GET_LOG) {
             get_log(root, response_buffer);
+        } else if (cmd == XAUTO_REQ_SET_BREAKPOINT_CONDITION) {
+            set_breakpoint_condition(root, response_buffer);
+        } else if (cmd == XAUTO_REQ_SET_BREAKPOINT_LOG) {
+            set_breakpoint_log(root, response_buffer);
+        } else if (cmd == XAUTO_REQ_GET_STACK_TRACE) {
+            get_stack_trace(response_buffer);
+        } else if (cmd == XAUTO_REQ_SEARCH_MEMORY) {
+            search_memory(root, response_buffer);
+        } else if (cmd == XAUTO_REQ_GET_THREADS) {
+            get_threads(response_buffer);
+        } else if (cmd == XAUTO_REQ_READ_STRING) {
+            read_string_at(root, response_buffer);
         } else if (cmd == XAUTO_REQ_QUIT) {
             msgpack::pack(response_buffer, "OK_QUITTING");
             return DISPATCH_EXIT;

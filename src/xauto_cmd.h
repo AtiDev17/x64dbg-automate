@@ -80,4 +80,12 @@ void get_label_at(msgpack::object root, msgpack::sbuffer& response_buffer);
 void get_comment_at(msgpack::object root, msgpack::sbuffer& response_buffer);
 void get_symbol_at(msgpack::object root, msgpack::sbuffer& response_buffer);
 void get_log(msgpack::object root, msgpack::sbuffer& response_buffer);
+
+typedef std::tuple<size_t, size_t, std::string, std::string> StackFrameTup;
+void get_stack_trace(msgpack::sbuffer& response_buffer);
+void search_memory(msgpack::object root, msgpack::sbuffer& response_buffer);
+
+typedef std::tuple<uint32_t, uint32_t, size_t, size_t, std::string> ThreadInfoTup;
+void get_threads(msgpack::sbuffer& response_buffer);
+void read_string_at(msgpack::object root, msgpack::sbuffer& response_buffer);
 std::wstring get_session_filename(size_t session_pid);

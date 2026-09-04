@@ -1,0 +1,39 @@
+name: Build Plugin
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        platform: [x64, x86]
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.platform == 'x64' && 'amd64' || 'x86' }}
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -G "Visual Studio 17 2022" -A ${{ matrix.platform == 'x64' && 'x64' || 'Win32' }}
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: plugin-${{ matrix.platform }}
+          path: build/Release/*.{dp64,dp32,dll}
+          if-no-files-found: warn
